@@ -404,7 +404,7 @@ public class AdminProductControllerIntegrationTest {
         UserLoginDto loginDto = new UserLoginDto(username, password);
 
         ResponseEntity<JwtResponseDto> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 loginDto,
                 JwtResponseDto.class
         );
@@ -424,7 +424,7 @@ public class AdminProductControllerIntegrationTest {
         );
 
         ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+                "/api/auth/registration",
                 registrationDto,
                 String.class
         );

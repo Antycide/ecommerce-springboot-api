@@ -1,6 +1,7 @@
 package org.example.ecommerce.IntegrationTests;
 
 import org.example.ecommerce.DTO.JwtResponseDto;
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserLoginDto;
 import org.example.ecommerce.DTO.UserRegistrationDto;
 import org.example.ecommerce.Exception.UserAlreadyExistsException;
@@ -52,14 +53,17 @@ public class AuthenticationControllerIntegrationTest {
                 "password123"
         );
 
-        ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+        ResponseEntity<RegisteredUserDto> response = testRestTemplate.postForEntity(
+                "/api/auth/registration",
                 userRegistrationDto,
-                String.class
+                RegisteredUserDto.class
         );
 
         assertThat(response.getStatusCode().value()).isEqualTo(HttpStatus.CREATED.value());
-        assertThat(response.getBody()).isEqualTo("User Created Successfully");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().username()).isEqualTo("test");
+        assertThat(response.getBody().id()).isEqualTo(1);
+
     }
 
     @Test
@@ -71,10 +75,10 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         // First registration - should succeed
-        ResponseEntity<String> firstResponse = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+        ResponseEntity<RegisteredUserDto> firstResponse = testRestTemplate.postForEntity(
+                "/api/auth/registration",
                 userRegistrationDto,
-                String.class
+                RegisteredUserDto.class
         );
         assertThat(firstResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -86,7 +90,7 @@ public class AuthenticationControllerIntegrationTest {
 
 
         ResponseEntity<String> secondResponse = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+                "/api/auth/registration",
                 userRegistrationDto2,
                 String.class
         );
@@ -105,10 +109,10 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         // First registration - should succeed
-        ResponseEntity<String> firstResponse = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+        ResponseEntity<RegisteredUserDto> firstResponse = testRestTemplate.postForEntity(
+                "/api/auth/registration",
                 userRegistrationDto,
-                String.class
+                RegisteredUserDto.class
         );
 
         assertThat(firstResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -121,7 +125,7 @@ public class AuthenticationControllerIntegrationTest {
 
 
         ResponseEntity<String> secondResponse = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+                "/api/auth/registration",
                 userRegistrationDto2,
                 String.class
         );
@@ -141,7 +145,7 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+                "/api/auth/registration",
                 userRegistrationDto,
                 String.class
         );
@@ -153,7 +157,7 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         ResponseEntity<JwtResponseDto> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 userLoginDto,
                 JwtResponseDto.class
         );
@@ -175,7 +179,7 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+                "/api/auth/registration",
                 userRegistrationDto,
                 String.class
         );
@@ -187,7 +191,7 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 userLoginDto,
                 String.class
         );
@@ -204,7 +208,7 @@ public class AuthenticationControllerIntegrationTest {
         );
 
         ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 userLoginDto,
                 String.class
         );

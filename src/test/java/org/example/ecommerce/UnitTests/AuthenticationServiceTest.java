@@ -1,6 +1,7 @@
 package org.example.ecommerce.UnitTests;
 
 import org.example.ecommerce.DTO.JwtResponseDto;
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserLoginDto;
 import org.example.ecommerce.Mappers.UserMapper;
 import org.example.ecommerce.DTO.UserRegistrationDto;
@@ -16,8 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -54,6 +53,7 @@ public class AuthenticationServiceTest {
 
     private UserRegistrationDto validUserDto;
     private UserLoginDto userLoginDto;
+    private RegisteredUserDto registeredUserDto;
     private User user;
 
     @BeforeEach
@@ -68,6 +68,10 @@ public class AuthenticationServiceTest {
                 "testuser",
                 "password123"
         );
+
+        registeredUserDto = new RegisteredUserDto(
+                1L,
+                "test");
 
         user = new User();
         user.setUsername("testuser");
@@ -84,13 +88,13 @@ public class AuthenticationServiceTest {
         when(userMapper.toUser(validUserDto)).thenReturn(user);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userMapper.userToRegisteredUserDto(any(User.class))).thenReturn(registeredUserDto);
 
         // When
-        ResponseEntity<String> response = authenticationService.registerUser(validUserDto);
+        RegisteredUserDto response = authenticationService.registerUser(validUserDto);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isEqualTo("User Created Successfully");
+        assertThat(response).isNotNull();
 
         verify(userRepository).findByUsername(validUserDto.username());
         verify(userRepository).findByEmail(validUserDto.email());
@@ -196,18 +200,16 @@ public class AuthenticationServiceTest {
         when(jwtUtils.generateJwtToken(authentication)).thenReturn("mockJwtToken");
 
         //when
-        ResponseEntity<JwtResponseDto> response = authenticationService.loginUser(userLoginDto);
+        JwtResponseDto response = authenticationService.loginUser(userLoginDto);
 
         //then
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtUtils).generateJwtToken(authentication);
 
-        assertEquals(200, response.getStatusCodeValue());
-        JwtResponseDto body = response.getBody();
-        assertNotNull(body);
-        assertEquals("mockJwtToken", body.jwtToken());
-        assertEquals("testuser", body.username());
-        assertEquals(List.of("CUSTOMER"), body.roles());
+        assertNotNull(response);
+        assertEquals("mockJwtToken", response.jwtToken());
+        assertEquals("testuser", response.username());
+        assertEquals(List.of("CUSTOMER"), response.roles());
     }
 
     @Test
@@ -222,8 +224,4 @@ public class AuthenticationServiceTest {
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verifyNoInteractions(jwtUtils);
     }
-
-
-
 }
-

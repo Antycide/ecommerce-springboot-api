@@ -1,9 +1,6 @@
 package org.example.ecommerce.IntegrationTests;
 
-import org.example.ecommerce.DTO.AdminCategoryDto;
-import org.example.ecommerce.DTO.JwtResponseDto;
-import org.example.ecommerce.DTO.UserLoginDto;
-import org.example.ecommerce.DTO.UserRegistrationDto;
+import org.example.ecommerce.DTO.*;
 import org.example.ecommerce.Model.UserRole;
 import org.example.ecommerce.Repository.CategoryRepository;
 import org.example.ecommerce.Repository.UserRepository;
@@ -130,7 +127,7 @@ public class CategoryControllerIntegrationTest {
         UserLoginDto loginDto = new UserLoginDto(username, password);
 
         ResponseEntity<JwtResponseDto> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 loginDto,
                 JwtResponseDto.class
         );
@@ -147,10 +144,10 @@ public class CategoryControllerIntegrationTest {
                 password
         );
 
-        ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+        ResponseEntity<RegisteredUserDto> response = testRestTemplate.postForEntity(
+                "/api/auth/registration",
                 registrationDto,
-                String.class
+                RegisteredUserDto.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);

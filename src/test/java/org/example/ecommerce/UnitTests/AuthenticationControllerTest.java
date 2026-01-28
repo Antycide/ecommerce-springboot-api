@@ -2,6 +2,7 @@ package org.example.ecommerce.UnitTests;
 
 import org.example.ecommerce.Controller.AuthenticationController;
 import org.example.ecommerce.DTO.JwtResponseDto;
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserLoginDto;
 import org.example.ecommerce.DTO.UserRegistrationDto;
 import org.example.ecommerce.Exception.GlobalExceptionHandler;
@@ -13,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,10 +46,14 @@ public class AuthenticationControllerTest {
                 "password123"
         );
 
-        when(authenticationService.registerUser(userRegistrationDto))
-                .thenReturn(new ResponseEntity<>("User Created Successfully", HttpStatus.CREATED));
+        RegisteredUserDto registeredUserDto = new RegisteredUserDto(
+                1L,
+                "test");
 
-        mockMvc.perform(post("/api/v1/auth/registration").
+        when(authenticationService.registerUser(userRegistrationDto))
+                .thenReturn(registeredUserDto);
+
+        mockMvc.perform(post("/api/auth/registration").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {
@@ -59,7 +62,9 @@ public class AuthenticationControllerTest {
                     "password": "password123"
                 }
             """)).andExpect(status().isCreated())
-                .andExpect(content().string("User Created Successfully"));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.username").value("test"));
         verify(authenticationService, times(1)).registerUser(userRegistrationDto);
 
     }
@@ -75,7 +80,7 @@ public class AuthenticationControllerTest {
         when(authenticationService.registerUser(any()))
                 .thenThrow(new UserAlreadyExistsException("User with username test already exists"));
 
-        mockMvc.perform(post("/api/v1/auth/registration").
+        mockMvc.perform(post("/api/auth/registration").
                         contentType(MediaType.APPLICATION_JSON)
                         .content("""
                 {
@@ -94,7 +99,7 @@ public class AuthenticationControllerTest {
         when(authenticationService.registerUser(any()))
                 .thenThrow(new UserAlreadyExistsException("User with email test123@gmail.com already exists"));
 
-        mockMvc.perform(post("/api/v1/auth/registration").
+        mockMvc.perform(post("/api/auth/registration").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {
@@ -117,9 +122,9 @@ public class AuthenticationControllerTest {
                 "test123",
                 List.of("CUSTOMER"));
 
-        when(authenticationService.loginUser(userLoginDto)).thenReturn(ResponseEntity.ok(jwtResponseDto));
+        when(authenticationService.loginUser(userLoginDto)).thenReturn(jwtResponseDto);
 
-        mockMvc.perform(post("/api/v1/auth/login").
+        mockMvc.perform(post("/api/auth/login").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {
@@ -138,7 +143,7 @@ public class AuthenticationControllerTest {
 
         when(authenticationService.loginUser(any())).thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        mockMvc.perform(post("/api/v1/auth/login").
+        mockMvc.perform(post("/api/auth/login").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {
@@ -151,7 +156,7 @@ public class AuthenticationControllerTest {
 
     @Test
     void loginUserWithBlankUsernameShouldReturn400() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/login").
+        mockMvc.perform(post("/api/auth/login").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {
@@ -164,7 +169,7 @@ public class AuthenticationControllerTest {
 
     @Test
     void loginUserWithBlankPasswordShouldReturn400() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/login").
+        mockMvc.perform(post("/api/auth/login").
                 contentType(MediaType.APPLICATION_JSON)
                 .content("""
                 {

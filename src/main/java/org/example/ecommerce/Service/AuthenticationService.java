@@ -2,6 +2,7 @@ package org.example.ecommerce.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.DTO.JwtResponseDto;
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserLoginDto;
 import org.example.ecommerce.Mappers.UserMapper;
 import org.example.ecommerce.DTO.UserRegistrationDto;
@@ -9,9 +10,6 @@ import org.example.ecommerce.Exception.UserAlreadyExistsException;
 import org.example.ecommerce.Jwt.JwtUtils;
 import org.example.ecommerce.Model.User;
 import org.example.ecommerce.Repository.UserRepository;
-import org.springframework.http.HttpStatus;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,7 +30,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    public ResponseEntity<String> registerUser(UserRegistrationDto userRegistrationDto){
+    public RegisteredUserDto registerUser(UserRegistrationDto userRegistrationDto){
 
         if (userRepository.findByUsername(userRegistrationDto.username()).isPresent()) {
             throw new UserAlreadyExistsException("User with username " + userRegistrationDto.username() + " already exists");
@@ -45,12 +43,10 @@ public class AuthenticationService {
         User user = userMapper.toUser(userRegistrationDto);
         user.setPassword(passwordEncoder.encode(userRegistrationDto.password()));
 
-        userRepository.save(user);
-
-        return new ResponseEntity<>("User Created Successfully", HttpStatus.CREATED);
+        return userMapper.userToRegisteredUserDto(userRepository.save(user));
     }
 
-    public ResponseEntity<JwtResponseDto> loginUser(UserLoginDto userLoginDto){
+    public JwtResponseDto loginUser(UserLoginDto userLoginDto){
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(userLoginDto.username(), userLoginDto.password())
@@ -64,7 +60,7 @@ public class AuthenticationService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        return new ResponseEntity<>(new JwtResponseDto(jwt, user.getUsername(), roles), HttpStatus.OK);
+        return new JwtResponseDto(jwt, user.getUsername(), roles);
 
     }
 }

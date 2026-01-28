@@ -1,5 +1,6 @@
 package org.example.ecommerce.Mappers;
 
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserRegistrationDto;
 import org.example.ecommerce.Model.User;
 import org.mapstruct.Mapper;
@@ -23,5 +24,7 @@ public interface UserMapper {
     User toUser(UserRegistrationDto userRegistrationDto);
 
     UserRegistrationDto toUserRegistrationDto(User user);
+
+    RegisteredUserDto userToRegisteredUserDto(User user);
 
 }

@@ -1,10 +1,6 @@
 package org.example.ecommerce.IntegrationTests;
 
-import org.example.ecommerce.DTO.JwtResponseDto;
-import org.example.ecommerce.DTO.ShowWishlistDto;
-import org.example.ecommerce.DTO.UserLoginDto;
-import org.example.ecommerce.DTO.UserRegistrationDto;
-import org.example.ecommerce.DTO.WishlistResponseDto;
+import org.example.ecommerce.DTO.*;
 import org.example.ecommerce.Model.Category;
 import org.example.ecommerce.Model.Product;
 import org.example.ecommerce.Model.User;
@@ -115,7 +111,7 @@ public class WishlistControllerIntegrationTest {
         UserLoginDto loginDto = new UserLoginDto(username, password);
 
         ResponseEntity<JwtResponseDto> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/login",
+                "/api/auth/login",
                 loginDto,
                 JwtResponseDto.class
         );
@@ -132,10 +128,10 @@ public class WishlistControllerIntegrationTest {
                 password
         );
 
-        ResponseEntity<String> response = testRestTemplate.postForEntity(
-                "/api/v1/auth/registration",
+        ResponseEntity<RegisteredUserDto> response = testRestTemplate.postForEntity(
+                "/api/auth/registration",
                 registrationDto,
-                String.class
+                RegisteredUserDto.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);

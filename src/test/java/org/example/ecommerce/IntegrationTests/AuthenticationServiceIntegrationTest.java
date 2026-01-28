@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.example.ecommerce.DTO.RegisteredUserDto;
 import org.example.ecommerce.DTO.UserLoginDto;
 import org.example.ecommerce.DTO.UserRegistrationDto;
 import org.example.ecommerce.Exception.UserAlreadyExistsException;
@@ -69,11 +70,11 @@ public class AuthenticationServiceIntegrationTest {
                 "password123"
         );
 
-        var response = authenticationService.registerUser(userRegistrationDto);
+        RegisteredUserDto response = authenticationService.registerUser(userRegistrationDto);
 
         assertThat(userRepository.findByUsername(userRegistrationDto.username()).isPresent()).isTrue();
         assertThat(userRepository.findByEmail(userRegistrationDto.email()).isPresent()).isTrue();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.username()).isEqualTo(userRegistrationDto.username());
     }
 
     @Test
@@ -136,15 +137,12 @@ public class AuthenticationServiceIntegrationTest {
         var response = authenticationService.loginUser(loginDto);
 
         // Basic assertions
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        var body = response.getBody();
-        assertNotNull(body);
-        assertThat(body.username()).isEqualTo("testuser");
-        assertThat(body.roles()).isEqualTo(List.of("CUSTOMER"));
+        assertNotNull(response);
+        assertThat(response.username()).isEqualTo("testuser");
+        assertThat(response.roles()).isEqualTo(List.of("CUSTOMER"));
 
         // JWT assertions
-        String token = body.jwtToken();
+        String token = response.jwtToken();
         assertThat(token).isNotBlank();
 
         Claims claims = Jwts.parserBuilder()
