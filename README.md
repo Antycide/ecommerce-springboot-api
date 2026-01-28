@@ -2,6 +2,16 @@
 
 # E-Commerce (Spring Boot)
 
+Production-style e-commerce REST API built with Spring Boot 3, JWT auth, Spring Security, JPA/Hibernate, and MapStruct.
+Includes unit + integration tests with Testcontainers and a CI workflow that runs on every push.
+
+## Features
+- JWT authentication with role-based access (ADMIN/CUSTOMER)
+- Product, category, cart, order, checkout, wishlist, and review flows
+- DTO-based API with validation and global error handling
+- Postgres persistence via Spring Data JPA
+- OpenAPI/Swagger documentation
+
 ## Local setup
 
 Prereqs:
@@ -15,6 +25,26 @@ Configuration (defaults are safe for local dev):
 Run the app:
 ```bash
 ./gradlew bootRun
+```
+
+Swagger UI:
+- `http://localhost:8080/swagger-ui/index.html`
+
+## Auth flow (quick start)
+
+1) Register:
+```http
+POST /api/v1/auth/registration
+```
+
+2) Login:
+```http
+POST /api/v1/auth/login
+```
+
+3) Use the JWT:
+```
+Authorization: Bearer <token>
 ```
 
 ## How to run tests
@@ -39,21 +69,21 @@ Auth:
 - `POST /api/v1/auth/registration`
 - `POST /api/v1/auth/login`
 
-Admin products:
+Products (ADMIN):
 - `POST /api/admin/products`
 - `GET /api/admin/products`
 - `GET /api/admin/products/{id}`
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
 
-Admin Categories:
+Categories (admin only):
 - `POST /api/categories`
 - `GET /api/categories`
 - `GET /api/categories/{id}`
 - `PUT /api/categories/{id}`
 - `DELETE /api/categories/{id}`
 
-Products:
+Products (CUSTOMER):
 - `GET /api/products`
 - `GET /api/products/{productId}`
 
