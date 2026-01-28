@@ -31,7 +31,7 @@ Report output:
 - `build/reports/tests/test/index.html`
 - `build/reports/jacoco/test/html/index.html`
 
-## API endpoints (high level)
+## API endpoints
 
 Auth:
 - `POST /api/v1/auth/registration`
@@ -44,7 +44,7 @@ Admin products:
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
 
-Categories:
+Admin Categories:
 - `POST /api/categories`
 - `GET /api/categories`
 - `GET /api/categories/{id}`
