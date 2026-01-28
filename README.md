@@ -1,3 +1,5 @@
+[![CI](https://github.com/Antycide/ecommerce-springboot-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Antycide/ecommerce-springboot-api/actions/workflows/ci.yml)
+
 # E-Commerce (Spring Boot)
 
 ## Local setup
