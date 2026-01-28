@@ -1,0 +1,10 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+  sql:
+    init:
+      mode: always
+jwt:
+  secret: bXlzZWNyZXRrZXkxMjM0NTY3ODkwbXlzZWNyZXRrZXkxMjM0NTY3ODkw
+  expiration: 86400000

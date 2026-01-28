@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.4
+        env:
+          POSTGRES_DB: E_Commerce
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/E_Commerce
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET_BASE64: bXlzZWNyZXRrZXkxMjM0NTY3ODkwbXlzZWNyZXRrZXkxMjM0NTY3ODkw
+      JWT_EXPIRATION_MS: 86400000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '22'
+          cache: gradle
+      - name: Run tests
+        run: ./gradlew test
