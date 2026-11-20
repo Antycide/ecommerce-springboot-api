@@ -3,10 +3,13 @@ package org.example.ecommerce.Model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.ecommerce.Exception.OutOfStockException;
+import org.example.ecommerce.Exception.ProductNotFoundException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -26,11 +29,94 @@ public class Cart {
     private List<CartItem> cartItems = new ArrayList<>();
 
     @Column(name = "total_price", nullable = false)
-    private BigDecimal totalPrice; // price without shipping
+    // Price without shipping. Snapshot written at the last cart change; it does not follow later product
+    // price changes, so in-app code reads getTotalPrice()/total(), which are always live.
+    private BigDecimal totalPrice = BigDecimal.ZERO;
+
+    public BigDecimal getTotalPrice() {
+        return total();
+    }
+
+    /** Adds one unit of the product, merging with an existing line. Never exceeds available stock. */
+    public CartItem add(Product product) {
+        CartItem item = findItem(product.getId());
+        boolean isNew = item == null;
+        if (isNew) {
+            item = new CartItem();
+            item.setProduct(product);
+            item.setCart(this);
+        }
+        requireStock(item);
+        if (isNew) {
+            cartItems.add(item);
+        }
+        item.setQuantity(item.getQuantity() + 1);
+        refreshTotal();
+        return item;
+    }
+
+    public void increment(Long productId) {
+        CartItem item = requireItem(productId);
+        requireStock(item);
+        item.setQuantity(item.getQuantity() + 1);
+        refreshTotal();
+    }
+
+    /** Removes the line when its quantity would drop to zero. */
+    public void decrement(Long productId) {
+        CartItem item = requireItem(productId);
+        if (item.getQuantity() > 1) {
+            item.setQuantity(item.getQuantity() - 1);
+        } else {
+            cartItems.remove(item);
+        }
+        refreshTotal();
+    }
+
+    /** No-op when the product is not in the cart. */
+    public void remove(Long productId) {
+        cartItems.removeIf(item -> item.getProduct().getId().equals(productId));
+        refreshTotal();
+    }
+
+    public void clear() {
+        cartItems.clear();
+        refreshTotal();
+    }
+
+    public boolean isEmpty() {
+        return cartItems.isEmpty();
+    }
+
+    public BigDecimal total() {
+        return cartItems.stream().map(CartItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
     @PrePersist
     @PreUpdate
-    public void calculateTotalPrice() {
-        this.totalPrice = cartItems.stream().map(CartItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    void refreshTotal() {
+        this.totalPrice = total();
+    }
+
+    private CartItem findItem(Long productId) {
+        return cartItems.stream()
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst().orElse(null);
+    }
+
+    private CartItem requireItem(Long productId) {
+        CartItem item = findItem(productId);
+        if (item == null) {
+            throw new ProductNotFoundException("Product with id " + productId + " does not exist in cart");
+        }
+        return item;
+    }
+
+    private static void requireStock(CartItem item) {
+        Product product = item.getProduct();
+        int available = Objects.requireNonNullElse(product.getAvailableQuantity(), 0); // column is nullable
+        if (available < item.getQuantity() + 1) {
+            throw new OutOfStockException("Product " + product.getProductName() + " is out of stock");
+        }
     }
 }

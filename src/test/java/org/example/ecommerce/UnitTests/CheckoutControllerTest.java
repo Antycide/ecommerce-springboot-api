@@ -3,7 +3,7 @@ package org.example.ecommerce.UnitTests;
 import org.example.ecommerce.Controller.CheckoutController;
 import org.example.ecommerce.DTO.ShowCheckoutOrderDto;
 import org.example.ecommerce.Exception.GlobalExceptionHandler;
-import org.example.ecommerce.Service.CheckoutService;
+import org.example.ecommerce.Service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -26,12 +28,12 @@ public class CheckoutControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CheckoutService checkoutService;
+    private OrderService orderService;
 
     @Test
     void checkout_returnsDto() throws Exception {
-        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "IN_PROGRESS", null, "STANDARD", 10.0);
-        when(checkoutService.checkout(1L)).thenReturn(dto);
+        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "IN_PROGRESS", null, "STANDARD", new BigDecimal("10.00"));
+        when(orderService.checkout(1L)).thenReturn(dto);
 
         mockMvc.perform(post("/api/checkout/1"))
                 .andExpect(status().isOk())

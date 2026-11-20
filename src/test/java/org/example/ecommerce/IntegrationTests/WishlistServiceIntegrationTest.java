@@ -24,6 +24,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +62,7 @@ public class WishlistServiceIntegrationTest {
     void setUp() {
         user = createUser("test123");
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(user, "test123"));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(user, "test123", List.of()));
     }
 
     @AfterEach

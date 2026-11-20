@@ -10,18 +10,16 @@ import org.example.ecommerce.Model.User;
 import org.example.ecommerce.Repository.ProductRepository;
 import org.example.ecommerce.Repository.ReviewRepository;
 import org.example.ecommerce.Service.ReviewService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.example.ecommerce.Service.CurrentShopper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +38,8 @@ public class ReviewServiceTest {
     private ProductRepository productRepository;
     @Mock
     private ReviewMapper reviewMapper;
+    @Mock
+    private CurrentShopper currentShopper;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -52,13 +52,7 @@ public class ReviewServiceTest {
         user.setId(1L);
         user.setUsername("test123");
 
-        var auth = new UsernamePasswordAuthenticationToken(user, "test123");
-        SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+        lenient().when(currentShopper.get()).thenReturn(user);
     }
 
     @Test

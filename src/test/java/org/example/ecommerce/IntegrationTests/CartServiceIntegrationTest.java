@@ -23,6 +23,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +62,7 @@ public class CartServiceIntegrationTest {
         user = createUser("test123");
         product = createProduct("Book");
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123"));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123", List.of()));
     }
 
     @AfterEach

@@ -1,12 +1,14 @@
 package org.example.ecommerce.IntegrationTests;
 
 import org.example.ecommerce.DTO.ShowCheckoutOrderDto;
+import org.example.ecommerce.Exception.OrderAlreadyCheckedOutException;
 import org.example.ecommerce.Exception.OutOfStockException;
 import org.example.ecommerce.Model.*;
 import org.example.ecommerce.Repository.*;
-import org.example.ecommerce.Service.CheckoutService;
+import org.example.ecommerce.Service.OrderService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,20 +21,21 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Testcontainers
 @SpringBootTest
-public class CheckoutServiceIntegrationTest {
+public class OrderCheckoutIntegrationTest {
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15.4");
 
     @Autowired
-    private CheckoutService checkoutService;
+    private OrderService orderService;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -58,7 +61,7 @@ public class CheckoutServiceIntegrationTest {
     void setUp() {
         user = createUser("test123");
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123"));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123", List.of()));
     }
 
     @AfterEach
@@ -77,7 +80,7 @@ public class CheckoutServiceIntegrationTest {
         Product product = createProduct("Book", 5);
         Order order = createOrderWithItem(user, product, 2);
 
-        ShowCheckoutOrderDto dto = checkoutService.checkout(order.getId());
+        ShowCheckoutOrderDto dto = orderService.checkout(order.getId());
 
         assertThat(dto.orderStatus()).isEqualTo(OrderStatus.IN_PROGRESS.name());
         Product updated = productRepository.findById(product.getId()).orElseThrow();
@@ -89,7 +92,42 @@ public class CheckoutServiceIntegrationTest {
         Product product = createProduct("Book", 1);
         Order order = createOrderWithItem(user, product, 2);
 
-        assertThrows(OutOfStockException.class, () -> checkoutService.checkout(order.getId()));
+        assertThrows(OutOfStockException.class, () -> orderService.checkout(order.getId()));
+    }
+
+    // Repeated because a race may not show on every run.
+    @RepeatedTest(5)
+    void checkout_calledTwiceConcurrently_takesStockOnce() throws Exception {
+        Product product = createProduct("Book", 10);
+        Order order = createOrderWithItem(user, product, 2);
+        CountDownLatch start = new CountDownLatch(1);
+
+        Callable<Boolean> attempt = () -> {
+            SecurityContextHolder.getContext()
+                    .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123", List.of()));
+            start.await();
+            try {
+                orderService.checkout(order.getId());
+                return true;
+            } catch (OrderAlreadyCheckedOutException e) {
+                return false;
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        };
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> first = pool.submit(attempt);
+            Future<Boolean> second = pool.submit(attempt);
+            start.countDown();
+            assertThat(List.of(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(true, false);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(productRepository.findById(product.getId()).orElseThrow().getAvailableQuantity()).isEqualTo(8);
     }
 
     private User createUser(String username) {

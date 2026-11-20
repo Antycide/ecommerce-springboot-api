@@ -34,12 +34,12 @@ Swagger UI:
 
 1) Register:
 ```http
-POST /api/v1/auth/registration
+POST /api/auth/registration
 ```
 
 2) Login:
 ```http
-POST /api/v1/auth/login
+POST /api/auth/login
 ```
 
 3) Use the JWT:
@@ -66,8 +66,8 @@ Report output:
 ## API endpoints
 
 Auth:
-- `POST /api/v1/auth/registration`
-- `POST /api/v1/auth/login`
+- `POST /api/auth/registration`
+- `POST /api/auth/login`
 
 Products (ADMIN):
 - `POST /api/admin/products`
