@@ -13,15 +13,13 @@ import org.example.ecommerce.Repository.UserRepository;
 import org.example.ecommerce.Repository.WishlistItemRepository;
 import org.example.ecommerce.Repository.WishlistRepository;
 import org.example.ecommerce.Service.WishListService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.example.ecommerce.Service.CurrentShopper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.LocalDateTime;
@@ -45,6 +43,8 @@ public class WishListServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private CurrentShopper currentShopper;
+    @Mock
     private WishlistRepository wishlistRepository;
 
     @InjectMocks
@@ -58,14 +58,7 @@ public class WishListServiceTest {
         user.setId(1L);
         user.setUsername("test123");
 
-        var auth = new UsernamePasswordAuthenticationToken(user, "test123");
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        lenient().when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+        lenient().when(currentShopper.get()).thenReturn(user);
     }
 
     @Test

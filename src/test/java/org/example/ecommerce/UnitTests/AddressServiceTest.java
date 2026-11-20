@@ -9,18 +9,14 @@ import org.example.ecommerce.Mappers.AddressMapper;
 import org.example.ecommerce.Model.Address;
 import org.example.ecommerce.Model.User;
 import org.example.ecommerce.Repository.AddressRepository;
-import org.example.ecommerce.Repository.UserRepository;
 import org.example.ecommerce.Service.AddressService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.example.ecommerce.Service.CurrentShopper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +33,7 @@ public class AddressServiceTest {
     @Mock
     private AddressMapper addressMapper;
     @Mock
-    private UserRepository userRepository;
+    private CurrentShopper currentShopper;
     @Mock
     private User user;
     @Mock
@@ -50,22 +46,12 @@ public class AddressServiceTest {
     @InjectMocks
     private AddressService addressService;
 
-    @BeforeEach
-    void setUp() {
-        var auth = new UsernamePasswordAuthenticationToken("test123", "test123");
-        SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
 
     @Test
     void addAddressToCurrentUser_firstAddress_savesAndAddsToUser_andReturnsDto() {
         // given
         when(user.getAddresses()).thenReturn(new ArrayList<>());
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         Address newAddress = mock(Address.class);
         when(addressMapper.addAddressDtoToAddress(addAddressDto)).thenReturn(newAddress);
@@ -91,7 +77,7 @@ public class AddressServiceTest {
         // given
         when(address.getStreetAddress()).thenReturn("duplicate street");
         when(user.getAddresses()).thenReturn(List.of(address));
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         Address newAddress = mock(Address.class);
         when(newAddress.getStreetAddress()).thenReturn("duplicate street");
@@ -107,7 +93,7 @@ public class AddressServiceTest {
     @Test
     void addAddressToCurrentUser_whenNewStreet_savesAndAddsToUser_andReturnsDto() {
         // given
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         List<Address> addresses = new ArrayList<>();
         addresses.add(address);
@@ -138,7 +124,7 @@ public class AddressServiceTest {
         // given
         List<Address> addresses = new ArrayList<>();
         when(user.getAddresses()).thenReturn(addresses);
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         Address address = mock(Address.class);
         when(address.getUser()).thenReturn(user);
@@ -158,7 +144,7 @@ public class AddressServiceTest {
     @Test
     void deleteAddressOfCurrentUser_whenAddressMissing_throws_andDoesNotDelete() {
         // given
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         when(addressRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -170,7 +156,7 @@ public class AddressServiceTest {
     @Test
     void deleteAddressOfCurrentUser_whenNotOwner_throws_andDoesNotDelete() {
         // given
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
         when(user.getId()).thenReturn(1L);
 
         User owner = mock(User.class);
@@ -188,7 +174,7 @@ public class AddressServiceTest {
     void getAddressOfCurrentUser_whenBelongsToUser_ByAddressId_returnsDto() {
         // given
         when(user.getId()).thenReturn(1L);
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         User owner = mock(User.class);
         when(owner.getId()).thenReturn(1L);
@@ -212,7 +198,7 @@ public class AddressServiceTest {
     void getAddressOfCurrentUser_whenDifferentUser_ByAddressId_throwsException() {
         // given
         when(user.getId()).thenReturn(1L);
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         User owner = mock(User.class);
         when(owner.getId()).thenReturn(2L);
@@ -232,7 +218,7 @@ public class AddressServiceTest {
     void getAllAddressesOfCurrentUser_whenEmpty_returnsEmptyList() {
         // given
         when(user.getAddresses()).thenReturn(new ArrayList<>());
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         // when
         List<ShowAddressDto> result = addressService.getAllAddressesOfCurrentUser();
@@ -246,7 +232,7 @@ public class AddressServiceTest {
     @Test
     void getAllAddressesOfCurrentUser_whenHasAddresses_mapsAll() {
         // given
-        when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
+        when(currentShopper.get()).thenReturn(user);
 
         Address a1 = mock(Address.class);
         Address a2 = mock(Address.class);

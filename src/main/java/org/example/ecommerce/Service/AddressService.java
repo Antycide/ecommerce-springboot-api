@@ -10,9 +10,6 @@ import org.example.ecommerce.Mappers.AddressMapper;
 import org.example.ecommerce.Model.Address;
 import org.example.ecommerce.Model.User;
 import org.example.ecommerce.Repository.AddressRepository;
-import org.example.ecommerce.Repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +22,11 @@ public class AddressService {
 
     private final AddressRepository addressRepository;
     private final AddressMapper addressMapper;
-    private final UserRepository userRepository;
+    private final CurrentShopper currentShopper;
 
     @Transactional
     public ShowAddressDto addAddressToCurrentUser(AddAddressDto addAddressDto) {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
         Address address = addressMapper.addAddressDtoToAddress(addAddressDto);
 
         if (user.getAddresses().isEmpty()) {
@@ -59,7 +56,7 @@ public class AddressService {
 
     @Transactional
     public void deleteAddressOfCurrentUser(Long addressId) {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
@@ -73,7 +70,7 @@ public class AddressService {
 
     @Transactional(readOnly = true)
     public ShowAddressDto getAddressOfCurrentUserByAddressId(Long addressId) {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
@@ -86,7 +83,7 @@ public class AddressService {
 
     @Transactional(readOnly = true)
     public List<ShowAddressDto> getAllAddressesOfCurrentUser() {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
         List<Address> addresses = user.getAddresses();
 
         if (addresses.isEmpty()) {
@@ -98,10 +95,4 @@ public class AddressService {
                 .toList();
     }
 
-    // The current user is the one who is logged in
-    private User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-    }
 }

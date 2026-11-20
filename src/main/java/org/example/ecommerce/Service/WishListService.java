@@ -14,8 +14,6 @@ import org.example.ecommerce.Repository.ProductRepository;
 import org.example.ecommerce.Repository.UserRepository;
 import org.example.ecommerce.Repository.WishlistItemRepository;
 import org.example.ecommerce.Repository.WishlistRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +30,7 @@ public class WishListService {
     private final WishlistItemRepository wishlistItemRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CurrentShopper currentShopper;
 
     private final WishlistRepository wishlistRepository;
 
@@ -40,7 +39,7 @@ public class WishListService {
     @Transactional
     public ShowWishlistDto addProductToWishListOfCurrentUser(Long productId){
         // Get current user from security context
-        User user = getCurrentUser();
+        User user = currentShopper.get();
 
         Wishlist wishlist = user.getWishlist();
         if (wishlist == null) {
@@ -75,7 +74,7 @@ public class WishListService {
 
     @Transactional
     public void deleteItemFromWishlist(Long productId) {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
         Wishlist wishlist = user.getWishlist();
 
         if (wishlist != null) {
@@ -94,7 +93,7 @@ public class WishListService {
 
     @Transactional(readOnly = true)
     public WishlistResponseDto showWishlistOfCurrentUser() {
-        User user = getCurrentUser();
+        User user = currentShopper.get();
 
         if (user.getWishlist() == null) {
             // if there are no products in the wishlist, we will return an empty list
@@ -116,10 +115,4 @@ public class WishListService {
         return wishlistMapper.wishlistToWishlistResponseDto(user.getWishlist());
     }
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-    }
 }

@@ -14,8 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +24,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
+    private final CurrentShopper currentShopper;
 
     //TODO refactor these methods
     // Create a method that gets single review by id from a product
@@ -36,8 +35,7 @@ public class ReviewService {
         Product product = productRepository.findById(productId).orElseThrow(
                 () -> new ProductNotFoundException("Product with id " + productId + " does not exist"));
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        User user = currentShopper.get();
 
         Review review = reviewMapper.reviewDtoToReview(reviewDto);
         review.setUser(user);

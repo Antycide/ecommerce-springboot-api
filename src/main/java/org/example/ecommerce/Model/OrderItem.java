@@ -36,9 +36,10 @@ public class OrderItem {
     private BigDecimal subtotal;
 
 
+    // Price is frozen when the order is placed; later product price changes must not rewrite it.
     @PrePersist
-    @PreUpdate
     public void calculateSubtotal() {
+        if (subtotal != null) return;
         this.subtotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
     }
 
