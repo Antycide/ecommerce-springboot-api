@@ -9,6 +9,7 @@ import org.example.ecommerce.Exception.ProductNotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -107,7 +108,8 @@ public class Cart {
 
     private static void requireStock(CartItem item) {
         Product product = item.getProduct();
-        if (product.getAvailableQuantity() < item.getQuantity() + 1) {
+        int available = Objects.requireNonNullElse(product.getAvailableQuantity(), 0); // column is nullable
+        if (available < item.getQuantity() + 1) {
             throw new OutOfStockException("Product " + product.getProductName() + " is out of stock");
         }
     }

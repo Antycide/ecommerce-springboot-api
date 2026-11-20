@@ -1,12 +1,14 @@
 package org.example.ecommerce.IntegrationTests;
 
 import org.example.ecommerce.DTO.ShowCheckoutOrderDto;
+import org.example.ecommerce.Exception.OrderAlreadyCheckedOutException;
 import org.example.ecommerce.Exception.OutOfStockException;
 import org.example.ecommerce.Model.*;
 import org.example.ecommerce.Repository.*;
 import org.example.ecommerce.Service.OrderService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -90,6 +93,41 @@ public class OrderCheckoutIntegrationTest {
         Order order = createOrderWithItem(user, product, 2);
 
         assertThrows(OutOfStockException.class, () -> orderService.checkout(order.getId()));
+    }
+
+    // Repeated because a race may not show on every run.
+    @RepeatedTest(5)
+    void checkout_calledTwiceConcurrently_takesStockOnce() throws Exception {
+        Product product = createProduct("Book", 10);
+        Order order = createOrderWithItem(user, product, 2);
+        CountDownLatch start = new CountDownLatch(1);
+
+        Callable<Boolean> attempt = () -> {
+            SecurityContextHolder.getContext()
+                    .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123"));
+            start.await();
+            try {
+                orderService.checkout(order.getId());
+                return true;
+            } catch (OrderAlreadyCheckedOutException e) {
+                return false;
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        };
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> first = pool.submit(attempt);
+            Future<Boolean> second = pool.submit(attempt);
+            start.countDown();
+            assertThat(List.of(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(true, false);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(productRepository.findById(product.getId()).orElseThrow().getAvailableQuantity()).isEqualTo(8);
     }
 
     private User createUser(String username) {

@@ -151,7 +151,7 @@ public class OrderServiceTest {
 
     @Test
     void checkout_whenOrderMissing_throwsException() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> orderService.checkout(1L));
     }
@@ -162,7 +162,7 @@ public class OrderServiceTest {
         otherUser.setId(2L);
         Order order = new Order();
         order.setUser(otherUser);
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
 
         assertThrows(UnauthorizedOrderAccessException.class, () -> orderService.checkout(1L));
     }
@@ -172,7 +172,7 @@ public class OrderServiceTest {
         Order order = new Order();
         order.setUser(user);
         order.setOrderStatus(OrderStatus.IN_PROGRESS);
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
 
         assertThrows(OrderAlreadyCheckedOutException.class, () -> orderService.checkout(1L));
     }
@@ -185,7 +185,7 @@ public class OrderServiceTest {
         Order order = new Order();
         order.setUser(user);
         order.setOrderItems(List.of(orderItem));
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
         when(productRepository.decreaseAvailableQuantity(10L, 5)).thenReturn(0);
 
         assertThrows(OutOfStockException.class, () -> orderService.checkout(1L));
@@ -201,7 +201,7 @@ public class OrderServiceTest {
         order.setUser(user);
         order.setOrderItems(List.of(orderItem));
         ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "PENDING", null, "STANDARD", 10.0);
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
         when(productRepository.decreaseAvailableQuantity(10L, 1)).thenReturn(1);
         when(orderMapper.orderToShowCheckoutOrderDto(order)).thenReturn(dto);
 

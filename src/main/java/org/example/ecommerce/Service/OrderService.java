@@ -70,7 +70,7 @@ public class OrderService {
     @Transactional
     public ShowCheckoutOrderDto checkout(Long orderId) {
         User user = currentShopper.get();
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id " + orderId + " does not exist"));
 
         if (!order.getUser().getId().equals(user.getId())) {

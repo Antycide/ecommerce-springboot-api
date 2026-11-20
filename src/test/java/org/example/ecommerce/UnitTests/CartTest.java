@@ -59,6 +59,14 @@ class CartTest {
     }
 
     @Test
+    void add_productWithNullStock_isTreatedAsOutOfStock() {
+        Product p = product(1, "10.00", 0);
+        p.setAvailableQuantity(null);
+
+        assertThrows(OutOfStockException.class, () -> new Cart().add(p));
+    }
+
+    @Test
     void add_beyondStock_throws() {
         Cart cart = new Cart();
         Product p = product(1, "10.00", 1);
