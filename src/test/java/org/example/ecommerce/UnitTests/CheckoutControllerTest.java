@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,7 +32,7 @@ public class CheckoutControllerTest {
 
     @Test
     void checkout_returnsDto() throws Exception {
-        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "IN_PROGRESS", null, "STANDARD", 10.0);
+        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "IN_PROGRESS", null, "STANDARD", new BigDecimal("10.00"));
         when(orderService.checkout(1L)).thenReturn(dto);
 
         mockMvc.perform(post("/api/checkout/1"))

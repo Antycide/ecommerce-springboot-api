@@ -164,6 +164,18 @@ class CartTest {
     }
 
     @Test
+    void totalPrice_followsLaterProductPriceChange() {
+        Cart cart = new Cart();
+        Product p = product(1, "10.00", 5);
+        cart.add(p);
+        cart.add(p);
+
+        p.setPrice(new BigDecimal("15.00"));
+
+        assertThat(cart.getTotalPrice()).isEqualByComparingTo("30.00");
+    }
+
+    @Test
     void total_sumsAllLines() {
         Cart cart = new Cart();
         Product a = product(1, "10.00", 5);

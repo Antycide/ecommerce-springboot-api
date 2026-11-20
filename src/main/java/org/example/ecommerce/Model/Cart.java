@@ -29,7 +29,13 @@ public class Cart {
     private List<CartItem> cartItems = new ArrayList<>();
 
     @Column(name = "total_price", nullable = false)
-    private BigDecimal totalPrice = BigDecimal.ZERO; // price without shipping; cached copy of total()
+    // Price without shipping. Snapshot written at the last cart change; it does not follow later product
+    // price changes, so in-app code reads getTotalPrice()/total(), which are always live.
+    private BigDecimal totalPrice = BigDecimal.ZERO;
+
+    public BigDecimal getTotalPrice() {
+        return total();
+    }
 
     /** Adds one unit of the product, merging with an existing line. Never exceeds available stock. */
     public CartItem add(Product product) {

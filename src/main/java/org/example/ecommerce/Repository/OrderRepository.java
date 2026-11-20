@@ -14,8 +14,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Override
     Optional<Order> findById(Long aLong);
 
-    /** SELECT ... FOR UPDATE: a concurrent checkout of the same order waits, then sees the new status. */
+    /**
+     * SELECT ... FOR UPDATE on the order, only if it belongs to the user: a concurrent checkout of the
+     * same order waits, then sees the new status. Empty when missing or owned by someone else.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT o FROM Order o WHERE o.id = :id")
-    Optional<Order> findByIdForUpdate(Long id);
+    @Query("SELECT o FROM Order o WHERE o.id = :id AND o.user.id = :userId")
+    Optional<Order> findOwnedByIdForUpdate(Long id, Long userId);
 }

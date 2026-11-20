@@ -60,7 +60,7 @@ public class OrderServiceIntegrationTest {
     void setUp() {
         user = createUser("test123");
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123"));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "test123", List.of()));
     }
 
     @AfterEach

@@ -1,5 +1,6 @@
 package org.example.ecommerce.Service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.DTO.CreateOrderRequest;
 import org.example.ecommerce.DTO.ShowCheckoutOrderDto;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -34,6 +36,7 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final OrderMapper orderMapper;
     private final CurrentShopper currentShopper;
+    private final EntityManager entityManager;
 
     @Transactional
     public ShowOrderDto createOrder(CreateOrderRequest request) {
@@ -70,25 +73,29 @@ public class OrderService {
     @Transactional
     public ShowCheckoutOrderDto checkout(Long orderId) {
         User user = currentShopper.get();
-        Order order = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Order with id " + orderId + " does not exist"));
-
-        if (!order.getUser().getId().equals(user.getId())) {
-            throw new UnauthorizedOrderAccessException("You don't have permission to checkout this order");
-        }
+        // Only the owner's checkout takes the row lock; others can't hold up someone else's order.
+        Order order = orderRepository.findOwnedByIdForUpdate(orderId, user.getId())
+                .orElseThrow(() -> orderRepository.existsById(orderId)
+                        ? new UnauthorizedOrderAccessException("You don't have permission to checkout this order")
+                        : new OrderNotFoundException("Order with id " + orderId + " does not exist"));
 
         if (order.getOrderStatus() != OrderStatus.PENDING) {
             throw new OrderAlreadyCheckedOutException("Order is already checked out");
         }
 
-        for (OrderItem orderItem : order.getOrderItems()) {
-            int updatedRows = productRepository.decreaseAvailableQuantity(
-                    orderItem.getProduct().getId(),
-                    orderItem.getQuantity());
+        // Fixed product-id order, so two checkouts sharing products lock their rows in the same order (no deadlock).
+        List<OrderItem> items = order.getOrderItems().stream()
+                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .toList();
+        for (OrderItem orderItem : items) {
+            Product product = orderItem.getProduct();
+            int updatedRows = productRepository.decreaseAvailableQuantity(product.getId(), orderItem.getQuantity());
 
             if (updatedRows == 0) {
-                throw new OutOfStockException("Product " + orderItem.getProduct().getProductName() + " is out of stock");
+                throw new OutOfStockException("Product " + product.getProductName() + " is out of stock");
             }
+            // The bulk UPDATE bypasses the persistence context; reload so this request sees the new stock.
+            entityManager.refresh(product);
         }
 
         order.setOrderStatus(OrderStatus.IN_PROGRESS);

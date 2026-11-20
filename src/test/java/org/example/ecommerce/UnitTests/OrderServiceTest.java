@@ -1,5 +1,6 @@
 package org.example.ecommerce.UnitTests;
 
+import jakarta.persistence.EntityManager;
 import org.example.ecommerce.DTO.CreateOrderRequest;
 import org.example.ecommerce.DTO.ShowCheckoutOrderDto;
 import org.example.ecommerce.DTO.ShowOrderDto;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +35,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +52,8 @@ public class OrderServiceTest {
     private OrderMapper orderMapper;
     @Mock
     private CurrentShopper currentShopper;
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private OrderService orderService;
@@ -151,18 +157,17 @@ public class OrderServiceTest {
 
     @Test
     void checkout_whenOrderMissing_throwsException() {
-        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.empty());
+        when(orderRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(OrderNotFoundException.class, () -> orderService.checkout(1L));
     }
 
     @Test
     void checkout_whenUserNotOwner_throwsException() {
-        User otherUser = new User();
-        otherUser.setId(2L);
-        Order order = new Order();
-        order.setUser(otherUser);
-        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
+        // The locking query is scoped to the owner, so someone else's order comes back empty and is never locked.
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.empty());
+        when(orderRepository.existsById(1L)).thenReturn(true);
 
         assertThrows(UnauthorizedOrderAccessException.class, () -> orderService.checkout(1L));
     }
@@ -172,7 +177,7 @@ public class OrderServiceTest {
         Order order = new Order();
         order.setUser(user);
         order.setOrderStatus(OrderStatus.IN_PROGRESS);
-        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.of(order));
 
         assertThrows(OrderAlreadyCheckedOutException.class, () -> orderService.checkout(1L));
     }
@@ -185,7 +190,7 @@ public class OrderServiceTest {
         Order order = new Order();
         order.setUser(user);
         order.setOrderItems(List.of(orderItem));
-        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.of(order));
         when(productRepository.decreaseAvailableQuantity(10L, 5)).thenReturn(0);
 
         assertThrows(OutOfStockException.class, () -> orderService.checkout(1L));
@@ -200,12 +205,38 @@ public class OrderServiceTest {
         Order order = new Order();
         order.setUser(user);
         order.setOrderItems(List.of(orderItem));
-        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "PENDING", null, "STANDARD", 10.0);
-        when(orderRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(order));
+        ShowCheckoutOrderDto dto = new ShowCheckoutOrderDto("ORD-1", "PENDING", null, "STANDARD", new BigDecimal("10.00"));
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.of(order));
         when(productRepository.decreaseAvailableQuantity(10L, 1)).thenReturn(1);
         when(orderMapper.orderToShowCheckoutOrderDto(order)).thenReturn(dto);
 
         assertThat(orderService.checkout(1L)).isEqualTo(dto);
         assertThat(order.getOrderStatus()).isEqualTo(OrderStatus.IN_PROGRESS);
+        verify(entityManager).refresh(orderItem.getProduct());
+    }
+
+    @Test
+    void checkout_takesStockInProductIdOrder_soConcurrentCheckoutsCannotDeadlock() {
+        Product high = product("1.00");
+        high.setId(20L);
+        Product low = product("1.00");
+        low.setId(10L);
+        OrderItem highItem = new OrderItem();
+        highItem.setProduct(high);
+        highItem.setQuantity(1);
+        OrderItem lowItem = new OrderItem();
+        lowItem.setProduct(low);
+        lowItem.setQuantity(1);
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderItems(List.of(highItem, lowItem));
+        when(orderRepository.findOwnedByIdForUpdate(1L, 1L)).thenReturn(Optional.of(order));
+        when(productRepository.decreaseAvailableQuantity(anyLong(), anyInt())).thenReturn(1);
+
+        orderService.checkout(1L);
+
+        InOrder inOrder = inOrder(productRepository);
+        inOrder.verify(productRepository).decreaseAvailableQuantity(10L, 1);
+        inOrder.verify(productRepository).decreaseAvailableQuantity(20L, 1);
     }
 }

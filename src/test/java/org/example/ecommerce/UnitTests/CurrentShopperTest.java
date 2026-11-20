@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,12 +45,21 @@ class CurrentShopperTest {
     }
 
     @Test
+    void get_whenAuthenticationNotYetAuthenticated_throwsCredentialsNotFound() {
+        // The two-argument constructor builds an unauthenticated token, e.g. mid-login.
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "pw"));
+
+        assertThrows(AuthenticationCredentialsNotFoundException.class, currentShopper::get);
+    }
+
+    @Test
     void get_whenLoggedIn_returnsUser() {
         User user = new User();
         user.setUsername("test123");
         when(userRepository.findByUsername("test123")).thenReturn(Optional.of(user));
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "pw"));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("test123", "pw", List.of()));
 
         assertThat(currentShopper.get()).isSameAs(user);
     }
