@@ -1,6 +1,9 @@
 package org.example.ecommerce.DTO;
 
-public record ShowProductDto(String productName,
+import java.math.BigDecimal;
+
+public record ShowProductDto(Long id,
+                             String productName,
                              String description,
-                             Double price) {
+                             BigDecimal price) {
 }

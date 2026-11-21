@@ -3,6 +3,7 @@ package org.example.ecommerce.Service;
 import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
+import org.example.ecommerce.Exception.ProductAlreadyInWishlistException;
 import org.example.ecommerce.Exception.ProductNotFoundException;
 import org.example.ecommerce.Exception.UserNotFoundException;
 import org.example.ecommerce.Mappers.WishlistMapper;
@@ -36,11 +37,8 @@ public class WishListService {
 
     private final WishlistRepository wishlistRepository;
 
-    //TODO REFACTOR ALL THE METHODS IN THIS CLASS
-    // This method might need to be rewritten!!!
     @Transactional
     public ShowWishlistDto addProductToWishListOfCurrentUser(Long productId){
-        // Get current user from security context
         User user = currentShopper.get();
 
         Wishlist wishlist = user.getWishlist();
@@ -59,7 +57,7 @@ public class WishListService {
                 .anyMatch(wishlistItem -> wishlistItem.getProduct().getId().equals(productId));
 
         if (alreadyInWishlist) {
-            throw new IllegalArgumentException("Product with id " + productId + " is already in wishlist");
+            throw new ProductAlreadyInWishlistException("Product with id " + productId + " is already in wishlist");
         }
 
         WishlistItem wishlistItem = new WishlistItem();
@@ -76,21 +74,16 @@ public class WishListService {
 
     @Transactional
     public void deleteItemFromWishlist(Long productId) {
-        User user = currentShopper.get();
-        Wishlist wishlist = user.getWishlist();
+        Wishlist wishlist = currentShopper.get().getWishlist();
+        // Same 404 whether the shopper has no wishlist yet or just not this product.
+        WishlistItem itemToDelete = Optional.ofNullable(wishlist).stream()
+                .flatMap(w -> w.getWishlistItems().stream())
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new ProductNotFoundException("Product not found in your wishlist"));
 
-        if (wishlist != null) {
-            Optional<WishlistItem> itemToDelete = wishlist.getWishlistItems().stream()
-                    .filter(item -> item.getProduct().getId().equals(productId))
-                    .findFirst();
-
-            if (itemToDelete.isPresent()) {
-                wishlistItemRepository.delete(itemToDelete.get());
-                wishlist.getWishlistItems().remove(itemToDelete.get());
-            } else {
-                throw new ProductNotFoundException("Product not found in your wishlist");
-            }
-        }
+        wishlistItemRepository.delete(itemToDelete);
+        wishlist.getWishlistItems().remove(itemToDelete);
     }
 
     @Transactional(readOnly = true)

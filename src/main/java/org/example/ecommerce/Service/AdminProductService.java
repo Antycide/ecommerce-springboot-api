@@ -9,12 +9,13 @@ import org.example.ecommerce.Exception.ProductAlreadyExistsException;
 import org.example.ecommerce.Exception.ProductNotFoundException;
 import org.example.ecommerce.Model.Category;
 import org.example.ecommerce.Model.Product;
+import org.example.ecommerce.Exception.ProductInUseException;
+import org.example.ecommerce.Repository.CartItemRepository;
 import org.example.ecommerce.Repository.CategoryRepository;
+import org.example.ecommerce.Repository.OrderItemRepository;
 import org.example.ecommerce.Repository.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,8 @@ public class AdminProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
 
     @Transactional
     public ShowAdminProductDto createProduct(AddProductDto addProductDto) {
@@ -55,6 +58,12 @@ public class AdminProductService {
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException("Product with id " + id + " does not exist");
         }
+        // Orders keep a reference to the product as purchase history, so it can't be removed.
+        if (orderItemRepository.existsByProductId(id)) {
+            throw new ProductInUseException("Product with id " + id + " is part of existing orders and cannot be deleted");
+        }
+        // Carts aren't history: drop the product from them (reviews and wishlist items cascade from Product).
+        cartItemRepository.deleteByProductId(id);
 
         productRepository.deleteById(id);
     }

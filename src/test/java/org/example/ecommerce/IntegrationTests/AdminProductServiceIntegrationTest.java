@@ -80,7 +80,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -101,7 +101,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -116,7 +116,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -140,7 +140,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -169,7 +169,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -190,7 +190,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -204,7 +204,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto updatedDto = new AddProductDto(
                 "Newname",
                 "NEWdesc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -221,7 +221,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -234,7 +234,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createUser();
@@ -248,7 +248,7 @@ public class AdminProductServiceIntegrationTest {
         AddProductDto updateDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "car");
 

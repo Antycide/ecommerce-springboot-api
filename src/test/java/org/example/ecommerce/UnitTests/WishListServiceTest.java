@@ -1,5 +1,7 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
+import org.example.ecommerce.Exception.ProductAlreadyInWishlistException;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
 import org.example.ecommerce.Exception.ProductNotFoundException;
@@ -78,7 +80,7 @@ public class WishListServiceTest {
         Wishlist wishlist = new Wishlist();
         wishlist.setUser(user);
 
-        ShowWishlistDto dto = new ShowWishlistDto(1L, "Product", 10.0, "desc", LocalDateTime.now());
+        ShowWishlistDto dto = new ShowWishlistDto(1L, 1L, "Product", new BigDecimal("10.0"), "desc", LocalDateTime.now());
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(wishlistRepository.save(any(Wishlist.class))).thenReturn(wishlist);
@@ -103,15 +105,15 @@ public class WishListServiceTest {
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-        assertThrows(IllegalArgumentException.class, () -> wishListService.addProductToWishListOfCurrentUser(1L));
+        assertThrows(ProductAlreadyInWishlistException.class, () -> wishListService.addProductToWishListOfCurrentUser(1L));
         verify(wishlistItemRepository, never()).save(any(WishlistItem.class));
     }
 
     @Test
-    void deleteItemFromWishlist_whenWishlistNull_noOp() {
+    void deleteItemFromWishlist_whenWishlistNull_throwsException() {
         user.setWishlist(null);
 
-        wishListService.deleteItemFromWishlist(1L);
+        assertThrows(ProductNotFoundException.class, () -> wishListService.deleteItemFromWishlist(1L));
 
         verifyNoInteractions(wishlistItemRepository);
     }

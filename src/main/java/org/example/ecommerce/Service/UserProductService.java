@@ -23,7 +23,7 @@ public class UserProductService {
     }
 
     @Transactional(readOnly = true)
-    public ShowProductDto getProductByProductName(Long productId) {
+    public ShowProductDto getProductById(Long productId) {
         return productMapper.productToShowProductDto(productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + productId + " does not exist")));
     }

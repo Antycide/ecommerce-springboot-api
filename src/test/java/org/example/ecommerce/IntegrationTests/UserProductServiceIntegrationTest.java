@@ -58,16 +58,16 @@ public class UserProductServiceIntegrationTest {
     }
 
     @Test
-    void getProductByProductName_whenMissing_throwsException() {
-        assertThrows(ProductNotFoundException.class, () -> userProductService.getProductByProductName(1L));
+    void getProductById_whenMissing_throwsException() {
+        assertThrows(ProductNotFoundException.class, () -> userProductService.getProductById(1L));
     }
 
     @Test
-    void getProductByProductName_returnsProduct() {
+    void getProductById_returnsProduct() {
         Category category = createCategory("Books");
         Product product = createProduct("Book", category);
 
-        ShowProductDto dto = userProductService.getProductByProductName(product.getId());
+        ShowProductDto dto = userProductService.getProductById(product.getId());
 
         assertThat(dto.productName()).isEqualTo("Book");
     }

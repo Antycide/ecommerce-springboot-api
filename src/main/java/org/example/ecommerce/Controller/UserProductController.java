@@ -5,6 +5,7 @@ import org.example.ecommerce.DTO.ShowProductDto;
 import org.example.ecommerce.Service.UserProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,12 +20,12 @@ public class UserProductController {
     private final UserProductService userProductService;
 
     @GetMapping
-    public ResponseEntity<Page<ShowProductDto>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ShowProductDto>> getAllProducts(@PageableDefault(sort = "id") Pageable pageable) {
         return ResponseEntity.ok(userProductService.getAllProducts(pageable));
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ShowProductDto> getProductByProductName(@PathVariable Long productId) {
-        return ResponseEntity.ok(userProductService.getProductByProductName(productId));
+    public ResponseEntity<ShowProductDto> getProductById(@PathVariable Long productId) {
+        return ResponseEntity.ok(userProductService.getProductById(productId));
     }
 }

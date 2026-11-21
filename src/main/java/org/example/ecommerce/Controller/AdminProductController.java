@@ -7,6 +7,7 @@ import org.example.ecommerce.DTO.ShowAdminProductDto;
 import org.example.ecommerce.Service.AdminProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,7 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ShowAdminProductDto>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ShowAdminProductDto>> getAllProducts(@PageableDefault(sort = "id") Pageable pageable) {
         return ResponseEntity.ok(adminProductService.getAllProducts(pageable));
     }
 }

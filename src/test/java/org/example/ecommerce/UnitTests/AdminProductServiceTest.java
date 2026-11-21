@@ -1,5 +1,9 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
+import org.example.ecommerce.Exception.ProductInUseException;
+import org.example.ecommerce.Repository.CartItemRepository;
+import org.example.ecommerce.Repository.OrderItemRepository;
 import org.example.ecommerce.DTO.AddProductDto;
 import org.example.ecommerce.DTO.ShowAdminProductDto;
 import org.example.ecommerce.Exception.CategoryNotFoundException;
@@ -29,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +46,10 @@ public class AdminProductServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
+    private OrderItemRepository orderItemRepository;
+    @Mock
+    private CartItemRepository cartItemRepository;
+    @Mock
     private Product product;
     @Mock
     private Category category;
@@ -50,8 +59,8 @@ public class AdminProductServiceTest {
 
     @Test
     void createProduct_whenCalled_returnsProductDto() {
-        AddProductDto addProductDto = new AddProductDto("name", "desc", 10.0, 3, "cat");
-        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", 10.0, 3);
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("10.0"), 3, "cat");
+        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", new BigDecimal("10.0"), 3);
 
         when(productRepository.existsByProductName("name")).thenReturn(false);
         when(categoryRepository.findByCategoryName("cat")).thenReturn(Optional.of(category));
@@ -70,7 +79,7 @@ public class AdminProductServiceTest {
 
     @Test
     void createProduct_whenNameExists_throwsProductAlreadyExistsException() {
-        AddProductDto addProductDto = new AddProductDto("name", "desc", 10.0, 3, "cat");
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("10.0"), 3, "cat");
 
         when(productRepository.existsByProductName("name")).thenReturn(true);
 
@@ -80,7 +89,7 @@ public class AdminProductServiceTest {
 
     @Test
     void createProduct_whenCategoryMissing_throwsCategoryNotFoundException() {
-        AddProductDto addProductDto = new AddProductDto("name", "desc", 10.0, 3, "cat");
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("10.0"), 3, "cat");
 
         when(productRepository.existsByProductName("name")).thenReturn(false);
         when(categoryRepository.findByCategoryName("cat")).thenReturn(Optional.empty());
@@ -93,8 +102,8 @@ public class AdminProductServiceTest {
     void getAllProducts_whenCalled_returnsMappedPage() {
         Pageable pageable = PageRequest.of(0, 2);
         Product productTwo = new Product();
-        ShowAdminProductDto dtoOne = new ShowAdminProductDto(1L, "p1", "d1", 11.0, 1);
-        ShowAdminProductDto dtoTwo = new ShowAdminProductDto(2L, "p2", "d2", 12.0, 2);
+        ShowAdminProductDto dtoOne = new ShowAdminProductDto(1L, "p1", "d1", new BigDecimal("11.0"), 1);
+        ShowAdminProductDto dtoTwo = new ShowAdminProductDto(2L, "p2", "d2", new BigDecimal("12.0"), 2);
         Page<Product> products = new PageImpl<>(List.of(product, productTwo), pageable, 2);
 
         when(productRepository.findAll(pageable)).thenReturn(products);
@@ -114,7 +123,18 @@ public class AdminProductServiceTest {
 
         adminProductService.deleteProduct(1L);
 
+        verify(cartItemRepository).deleteByProductId(1L);
         verify(productRepository).deleteById(1L);
+    }
+
+    @Test
+    void deleteProduct_whenInOrders_throwsProductInUseException() {
+        when(productRepository.existsById(1L)).thenReturn(true);
+        when(orderItemRepository.existsByProductId(1L)).thenReturn(true);
+
+        assertThrows(ProductInUseException.class, () -> adminProductService.deleteProduct(1L));
+        verifyNoInteractions(cartItemRepository);
+        verify(productRepository, never()).deleteById(1L);
     }
 
     @Test
@@ -127,7 +147,7 @@ public class AdminProductServiceTest {
 
     @Test
     void getProductById_whenExists_returnsDto() {
-        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", 10.0, 3);
+        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", new BigDecimal("10.0"), 3);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.productToShowAdminProductDto(product)).thenReturn(showAdminProductDto);
@@ -146,8 +166,8 @@ public class AdminProductServiceTest {
 
     @Test
     void updateProduct_whenExists_updatesAndReturnsDto() {
-        AddProductDto addProductDto = new AddProductDto("name", "desc", 10.0, 3, "cat");
-        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", 10.0, 3);
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("10.0"), 3, "cat");
+        ShowAdminProductDto showAdminProductDto = new ShowAdminProductDto(1L, "name", "desc", new BigDecimal("10.0"), 3);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(categoryRepository.findByCategoryName("cat")).thenReturn(Optional.of(category));
@@ -163,7 +183,7 @@ public class AdminProductServiceTest {
 
     @Test
     void updateProduct_whenMissing_throwsProductNotFoundException() {
-        AddProductDto addProductDto = new AddProductDto("name", "desc", 10.0, 3, "cat");
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("10.0"), 3, "cat");
 
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 

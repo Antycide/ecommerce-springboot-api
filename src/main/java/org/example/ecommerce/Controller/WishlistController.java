@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
 import org.example.ecommerce.Service.WishListService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/wishlist")
@@ -21,13 +20,7 @@ public class WishlistController {
     public ResponseEntity<ShowWishlistDto> addProductToWishlist(@PathVariable Long productId) {
         ShowWishlistDto wishlist = wishListService.addProductToWishListOfCurrentUser(productId);
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .path("/api/wishlist/items/{id}")
-                .buildAndExpand(wishlist.wishlistId())
-                .toUri();
-
-        return ResponseEntity.created(location).body(wishlist);
+        return ResponseEntity.status(HttpStatus.CREATED).body(wishlist);
     }
 
     @DeleteMapping("/{productId}")

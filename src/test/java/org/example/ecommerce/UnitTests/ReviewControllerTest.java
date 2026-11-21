@@ -1,6 +1,8 @@
 package org.example.ecommerce.UnitTests;
 
 import org.example.ecommerce.Controller.ReviewController;
+import static org.mockito.Mockito.verifyNoInteractions;
+import org.springframework.data.domain.Sort;
 import org.example.ecommerce.DTO.ShowReviewDto;
 import org.example.ecommerce.Exception.GlobalExceptionHandler;
 import org.example.ecommerce.Service.ReviewService;
@@ -47,7 +49,7 @@ public class ReviewControllerTest {
                         }
                         """))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/products/1/reviews/1"))
+                .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.reviewText").value("Great"));
     }
@@ -55,12 +57,22 @@ public class ReviewControllerTest {
     @Test
     void getAllReviews_returnsPage() throws Exception {
         ShowReviewDto dto = new ShowReviewDto(1L, "Great", "test123");
-        when(reviewService.getAllReviews(1L, PageRequest.of(0, 10)))
-                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1));
+        when(reviewService.getAllReviews(1L, PageRequest.of(0, 10, Sort.by("id"))))
+                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 10, Sort.by("id")), 1));
 
         mockMvc.perform(get("/api/products/1/reviews?page=0&size=10"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].reviewText").value("Great"));
+    }
+
+    @Test
+    void addReview_whenTextBlank_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/products/1/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reviewText\": \" \"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(reviewService);
     }
 }

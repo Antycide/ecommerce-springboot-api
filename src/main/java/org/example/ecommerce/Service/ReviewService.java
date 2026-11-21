@@ -12,8 +12,6 @@ import org.example.ecommerce.Repository.ProductRepository;
 import org.example.ecommerce.Repository.ReviewRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +23,6 @@ public class ReviewService {
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
     private final CurrentShopper currentShopper;
-
-    //TODO refactor these methods
-    // Create a method that gets single review by id from a product
 
     @Transactional
     public ShowReviewDto addReview(Long productId, AddReviewDto reviewDto) {

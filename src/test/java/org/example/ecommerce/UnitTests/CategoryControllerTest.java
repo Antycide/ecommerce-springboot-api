@@ -1,6 +1,8 @@
 package org.example.ecommerce.UnitTests;
 
 import org.example.ecommerce.Controller.CategoryController;
+import static org.mockito.Mockito.verifyNoInteractions;
+import org.example.ecommerce.Exception.CategoryAlreadyExistsException;
 import org.example.ecommerce.DTO.AdminCategoryDto;
 import org.example.ecommerce.Exception.GlobalExceptionHandler;
 import org.example.ecommerce.Service.CategoryService;
@@ -80,10 +82,40 @@ public class CategoryControllerTest {
     @Test
     void getCategoryById_returnsOk() throws Exception {
         AdminCategoryDto dto = new AdminCategoryDto(1L, "Books");
-        when(categoryService.getCategoryById(1L)).thenReturn(ResponseEntity.ok(dto));
+        when(categoryService.getCategoryById(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/api/categories/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.categoryName").value("Books"));
+    }
+
+    @Test
+    void createCategory_whenBlank_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/categories")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("   "))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(categoryService);
+    }
+
+    @Test
+    void createCategory_whenJsonBody_returnsUnsupportedMediaType() throws Exception {
+        mockMvc.perform(post("/api/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"categoryName\": \"Books\"}"))
+                .andExpect(status().isUnsupportedMediaType());
+
+        verifyNoInteractions(categoryService);
+    }
+
+    @Test
+    void createCategory_whenDuplicate_returnsBadRequest() throws Exception {
+        when(categoryService.createCategory("Books")).thenThrow(new CategoryAlreadyExistsException("exists"));
+
+        mockMvc.perform(post("/api/categories")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("Books"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -70,6 +70,20 @@ public class UserProductControllerIntegrationTest {
     }
 
     @Test
+    void getAllProducts_whenSortFieldUnknown_returnsBadRequest() {
+        String jwt = loginAndGetJwt("test123", "test123");
+
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/products?sort=noSuchField",
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(jwt)),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void getProductById_returnsProduct() {
         Category category = createCategory("Books");
         Product product = createProduct("Book", category);
