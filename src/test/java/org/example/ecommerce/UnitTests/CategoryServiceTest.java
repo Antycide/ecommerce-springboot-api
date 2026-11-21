@@ -1,6 +1,7 @@
 package org.example.ecommerce.UnitTests;
 
 import org.example.ecommerce.DTO.AdminCategoryDto;
+import org.example.ecommerce.Exception.CategoryAlreadyExistsException;
 import org.example.ecommerce.Exception.CategoryNotFoundException;
 import org.example.ecommerce.Mappers.CategoryMapper;
 import org.example.ecommerce.Model.Category;
@@ -11,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,17 +54,14 @@ public class CategoryServiceTest {
     }
 
     @Test
-    void getCategoryById_whenExists_returnsResponseEntity() {
+    void getCategoryById_whenExists_returnsDto() {
         Category category = new Category();
         AdminCategoryDto dto = new AdminCategoryDto(1L, "Books");
 
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(categoryMapper.categoryToAdminCategoryDto(category)).thenReturn(dto);
 
-        ResponseEntity<AdminCategoryDto> response = categoryService.getCategoryById(1L);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(dto);
+        assertThat(categoryService.getCategoryById(1L)).isEqualTo(dto);
     }
 
     @Test
@@ -118,5 +114,39 @@ public class CategoryServiceTest {
         List<AdminCategoryDto> result = categoryService.getAllCategories();
 
         assertThat(result).containsExactly(dto);
+    }
+
+    @Test
+    void createCategory_whenNameTaken_throwsCategoryAlreadyExists() {
+        Category existing = new Category();
+        existing.setId(1L);
+        when(categoryRepository.findByCategoryName("Books")).thenReturn(Optional.of(existing));
+
+        assertThrows(CategoryAlreadyExistsException.class, () -> categoryService.createCategory(" Books "));
+        verify(categoryRepository, never()).save(any());
+    }
+
+    @Test
+    void updateCategory_whenNameTakenByAnother_throwsCategoryAlreadyExists() {
+        Category own = new Category();
+        own.setId(1L);
+        Category other = new Category();
+        other.setId(2L);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(own));
+        when(categoryRepository.findByCategoryName("Movies")).thenReturn(Optional.of(other));
+
+        assertThrows(CategoryAlreadyExistsException.class, () -> categoryService.updateCategory(1L, "Movies"));
+    }
+
+    @Test
+    void updateCategory_whenKeepingOwnName_succeeds() {
+        Category own = new Category();
+        own.setId(1L);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(own));
+        when(categoryRepository.findByCategoryName("Books")).thenReturn(Optional.of(own));
+
+        categoryService.updateCategory(1L, "Books");
+
+        verify(categoryRepository).save(own);
     }
 }

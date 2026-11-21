@@ -1,5 +1,7 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
+import org.springframework.data.domain.Sort;
 import org.example.ecommerce.Controller.UserProductController;
 import org.example.ecommerce.DTO.ShowProductDto;
 import org.example.ecommerce.Exception.GlobalExceptionHandler;
@@ -34,9 +36,9 @@ public class UserProductControllerTest {
 
     @Test
     void getAllProducts_returnsPage() throws Exception {
-        ShowProductDto dto = new ShowProductDto("Product", "desc", 10.0);
-        when(userProductService.getAllProducts(PageRequest.of(0, 20)))
-                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 20), 1));
+        ShowProductDto dto = new ShowProductDto(1L, "Product", "desc", new BigDecimal("10.0"));
+        when(userProductService.getAllProducts(PageRequest.of(0, 20, Sort.by("id"))))
+                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 20, Sort.by("id")), 1));
 
         mockMvc.perform(get("/api/products?page=0&size=20"))
                 .andExpect(status().isOk())
@@ -46,8 +48,8 @@ public class UserProductControllerTest {
 
     @Test
     void getProductById_returnsProduct() throws Exception {
-        ShowProductDto dto = new ShowProductDto("Product", "desc", 10.0);
-        when(userProductService.getProductByProductName(1L)).thenReturn(dto);
+        ShowProductDto dto = new ShowProductDto(1L, "Product", "desc", new BigDecimal("10.0"));
+        when(userProductService.getProductById(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/api/products/1"))
                 .andExpect(status().isOk())

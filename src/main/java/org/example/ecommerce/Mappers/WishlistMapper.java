@@ -11,6 +11,7 @@ import org.mapstruct.Mapping;
 public interface WishlistMapper {
 
     @Mapping(source = "wishlist.id", target = "wishlistId")
+    @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.productName", target = "productName")
     @Mapping(source = "product.price", target = "price")
     @Mapping(source = "product.description", target = "description")

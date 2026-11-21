@@ -1,5 +1,6 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
 import org.example.ecommerce.DTO.ShowProductDto;
 import org.example.ecommerce.Exception.ProductNotFoundException;
 import org.example.ecommerce.Mappers.ProductMapper;
@@ -36,7 +37,7 @@ public class UserProductServiceTest {
     @Test
     void getAllProducts_returnsMappedPage() {
         Product product = new Product();
-        ShowProductDto dto = new ShowProductDto("name", "desc", 10.0);
+        ShowProductDto dto = new ShowProductDto(1L, "name", "desc", new BigDecimal("10.0"));
 
         Page<Product> page = new PageImpl<>(List.of(product), PageRequest.of(0, 10), 1);
         when(productRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
@@ -48,21 +49,21 @@ public class UserProductServiceTest {
     }
 
     @Test
-    void getProductByProductName_whenMissing_throwsException() {
+    void getProductById_whenMissing_throwsException() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ProductNotFoundException.class, () -> userProductService.getProductByProductName(1L));
+        assertThrows(ProductNotFoundException.class, () -> userProductService.getProductById(1L));
     }
 
     @Test
-    void getProductByProductName_whenExists_returnsDto() {
+    void getProductById_whenExists_returnsDto() {
         Product product = new Product();
-        ShowProductDto dto = new ShowProductDto("name", "desc", 10.0);
+        ShowProductDto dto = new ShowProductDto(1L, "name", "desc", new BigDecimal("10.0"));
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.productToShowProductDto(product)).thenReturn(dto);
 
-        ShowProductDto result = userProductService.getProductByProductName(1L);
+        ShowProductDto result = userProductService.getProductById(1L);
 
         assertThat(result).isEqualTo(dto);
     }

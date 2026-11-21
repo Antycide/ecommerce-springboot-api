@@ -75,9 +75,10 @@ Products (ADMIN):
 - `GET /api/admin/products/{id}`
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
+  - Returns 409 if the product is part of an existing order; it is removed from carts otherwise.
 
 Categories (admin only):
-- `POST /api/categories`
+- `POST /api/categories` (body: the category name as `text/plain`; names must be unique)
 - `GET /api/categories`
 - `GET /api/categories/{id}`
 - `PUT /api/categories/{id}`
@@ -86,6 +87,9 @@ Categories (admin only):
 Products (CUSTOMER):
 - `GET /api/products`
 - `GET /api/products/{productId}`
+
+Paged endpoints (`/api/admin/products`, `/api/products`, reviews) sort by `id` unless a `sort` parameter is given.
+Prices are returned as decimals (`BigDecimal`).
 
 OpenAPI:
 - `GET /swagger-ui/index.html`

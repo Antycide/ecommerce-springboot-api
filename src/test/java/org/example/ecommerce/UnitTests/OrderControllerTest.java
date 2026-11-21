@@ -36,7 +36,7 @@ public class OrderControllerTest {
     private OrderService orderService;
 
     @Test
-    void createOrder_returnsCreatedWithLocation() throws Exception {
+    void createOrder_returnsCreated() throws Exception {
         ShowOrderDto dto = new ShowOrderDto(1L, null, "PENDING", "ORD-1", BigDecimal.TEN, "STANDARD");
         when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(dto);
 
@@ -49,7 +49,7 @@ public class OrderControllerTest {
                         }
                         """))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/orders/1"))
+                .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.id").value(1));
     }
 

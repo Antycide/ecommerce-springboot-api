@@ -1,5 +1,6 @@
 package org.example.ecommerce.IntegrationTests;
 
+import java.math.BigDecimal;
 import jakarta.transaction.Transactional;
 import org.example.ecommerce.DTO.*;
 import org.example.ecommerce.Model.Address;
@@ -65,7 +66,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -89,7 +90,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -112,7 +113,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -132,11 +133,29 @@ public class AdminProductControllerIntegrationTest {
     }
 
     @Test
+    void createProduct_whenPriceNegative_returnsBadRequest() {
+        AddProductDto addProductDto = new AddProductDto("name", "desc", new BigDecimal("-1.00"), 3, "cat");
+        createCategory("cat");
+        String jwt = loginAndGetJwt("test123", "test123");
+
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/admin/products",
+                HttpMethod.POST,
+                new HttpEntity<>(addProductDto, bearerHeaders(jwt)),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("price must be greater than 0");
+        assertThat(productRepository.findAll()).isEmpty();
+    }
+
+    @Test
     void createProduct_whenDuplicateProduct_throwsException() {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -167,7 +186,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -215,7 +234,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -262,7 +281,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -281,7 +300,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto updatedProduct = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
 
@@ -302,7 +321,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -326,7 +345,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");
@@ -346,7 +365,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto updatedDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "car");
 
@@ -366,7 +385,7 @@ public class AdminProductControllerIntegrationTest {
         AddProductDto addProductDto = new AddProductDto(
                 "name",
                 "desc",
-                10.0,
+                new BigDecimal("10.0"),
                 3,
                 "cat");
         createCategory("cat");

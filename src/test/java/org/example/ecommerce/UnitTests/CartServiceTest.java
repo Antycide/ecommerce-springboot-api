@@ -71,7 +71,7 @@ public class CartServiceTest {
     void addProductToCart_whenCartIsNull_createsCartAndAddsItem() {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        ShowCartItemDto dto = new ShowCartItemDto(1L, "Test Product", "desc", 10.0, 1);
+        ShowCartItemDto dto = new ShowCartItemDto(1L, "Test Product", "desc", new BigDecimal("10.0"), 1);
         when(cartItemMapper.cartItemToShowCartItemDto(any(CartItem.class))).thenReturn(dto);
 
         ShowCartItemDto result = cartService.addProductToCart(1L);
@@ -101,7 +101,7 @@ public class CartServiceTest {
         CartItem item = cart.add(product);
         user.setCart(cart);
         when(cartItemMapper.cartItemToShowCartItemDto(item))
-                .thenReturn(new ShowCartItemDto(1L, "Test Product", "desc", 10.0, 1));
+                .thenReturn(new ShowCartItemDto(1L, "Test Product", "desc", new BigDecimal("10.0"), 1));
 
         assertThat(cartService.showCart().cart()).hasSize(1);
     }

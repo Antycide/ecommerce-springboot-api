@@ -1,5 +1,7 @@
 package org.example.ecommerce.Exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -8,10 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-
-import java.util.Date;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,13 +46,36 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(NoProductsInWishlistException.class)
-    public ResponseEntity<Object> handleNoProductsInWishlistException(NoProductsInWishlistException exception, WebRequest request) {
-        return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);
+    @ExceptionHandler(CategoryAlreadyExistsException.class)
+    public ResponseEntity<Object> handleCategoryAlreadyExistsException(CategoryAlreadyExistsException exception, WebRequest request){
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ProductAlreadyInWishlistException.class)
+    public ResponseEntity<Object> handleProductAlreadyInWishlistException(ProductAlreadyInWishlistException exception, WebRequest request){
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ProductInUseException.class)
+    public ResponseEntity<Object> handleProductInUseException(ProductInUseException exception, WebRequest request){
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    // e.g. ?sort=noSuchField on a paged endpoint
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<Object> handlePropertyReferenceException(PropertyReferenceException exception, WebRequest request){
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    // Safety net for constraint violations the services don't pre-check (races, over-long columns).
+    // Fixed message so SQL details don't leak to clients.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException exception, WebRequest request){
+        return new ResponseEntity<>("Request conflicts with existing data or violates a data constraint", HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(EmptyCartException.class)
-    public ResponseEntity<Object> handleAllExceptions(EmptyCartException exception, WebRequest request){
+    public ResponseEntity<Object> handleEmptyCartException(EmptyCartException exception, WebRequest request){
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -78,7 +100,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(OrderAlreadyCheckedOutException.class)
-    public ResponseEntity<Object> handleAllExceptions(Exception exception, WebRequest request){
+    public ResponseEntity<Object> handleOrderAlreadyCheckedOutException(OrderAlreadyCheckedOutException exception, WebRequest request){
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 

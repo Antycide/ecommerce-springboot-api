@@ -1,5 +1,7 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
+import org.example.ecommerce.Exception.ProductAlreadyInWishlistException;
 import org.example.ecommerce.Controller.WishlistController;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
@@ -36,12 +38,12 @@ public class WishlistControllerTest {
 
     @Test
     void addProductToWishlist_returnsCreated() throws Exception {
-        ShowWishlistDto dto = new ShowWishlistDto(1L, "Product", 10.0, "desc", LocalDateTime.now());
+        ShowWishlistDto dto = new ShowWishlistDto(1L, 1L, "Product", new BigDecimal("10.0"), "desc", LocalDateTime.now());
         when(wishListService.addProductToWishListOfCurrentUser(1L)).thenReturn(dto);
 
         mockMvc.perform(post("/api/wishlist/1"))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/wishlist/items/1"))
+                .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.wishlistId").value(1));
     }
 
@@ -81,5 +83,14 @@ public class WishlistControllerTest {
 
         mockMvc.perform(get("/api/wishlist/2"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void addProductToWishlist_whenAlreadyInWishlist_returnsBadRequest() throws Exception {
+        when(wishListService.addProductToWishListOfCurrentUser(1L))
+                .thenThrow(new ProductAlreadyInWishlistException("already there"));
+
+        mockMvc.perform(post("/api/wishlist/1"))
+                .andExpect(status().isBadRequest());
     }
 }

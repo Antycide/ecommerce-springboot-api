@@ -1,5 +1,6 @@
 package org.example.ecommerce.UnitTests;
 
+import java.math.BigDecimal;
 import org.example.ecommerce.Controller.CartController;
 import org.example.ecommerce.DTO.ShowCartDto;
 import org.example.ecommerce.DTO.ShowCartItemDto;
@@ -34,7 +35,7 @@ public class CartControllerTest {
 
     @Test
     void addProductToCart_returnsItem() throws Exception {
-        ShowCartItemDto dto = new ShowCartItemDto(1L, "Product", "desc", 10.0, 1);
+        ShowCartItemDto dto = new ShowCartItemDto(1L, "Product", "desc", new BigDecimal("10.0"), 1);
         when(cartService.addProductToCart(1L)).thenReturn(dto);
 
         mockMvc.perform(post("/api/cart/1"))
@@ -46,7 +47,7 @@ public class CartControllerTest {
 
     @Test
     void showCart_returnsCart() throws Exception {
-        ShowCartDto dto = new ShowCartDto(List.of(new ShowCartItemDto(1L, "Product", "desc", 10.0, 1)));
+        ShowCartDto dto = new ShowCartDto(List.of(new ShowCartItemDto(1L, "Product", "desc", new BigDecimal("10.0"), 1)));
         when(cartService.showCart()).thenReturn(dto);
 
         mockMvc.perform(get("/api/cart"))
