@@ -89,9 +89,28 @@ public class WishlistControllerIntegrationTest {
     }
 
     @Test
-    void showWishlistOfAnotherUser_returnsEmptyList() {
+    void showWishlistOfUser_whenCustomerReadsAnotherUser_returnsForbidden() {
         User other = registerUserEntity("other", "other@example.com");
         String jwt = loginAndGetJwt("test123", "test123");
+
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/wishlist/" + other.getId(),
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(jwt)),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void showWishlistOfUser_whenAdmin_returnsWishlist() {
+        User other = registerUserEntity("other", "other@example.com");
+        String jwt = loginAndGetJwt("admin", "admin123");
+        // Roles are reloaded from the DB on every request, so promoting after login is enough.
+        User admin = userRepository.findByUsername("admin").orElseThrow();
+        admin.setRole(UserRole.ADMIN);
+        userRepository.save(admin);
 
         ResponseEntity<WishlistResponseDto> response = testRestTemplate.exchange(
                 "/api/wishlist/" + other.getId(),

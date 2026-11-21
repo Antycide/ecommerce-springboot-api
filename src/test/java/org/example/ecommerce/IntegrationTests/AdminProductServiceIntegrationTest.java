@@ -24,6 +24,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -263,7 +264,8 @@ public class AdminProductServiceIntegrationTest {
         createProduct("p1", category);
         createProduct("p2", category);
 
-        Pageable pageable = PageRequest.of(0, 1);
+        // Without a sort Postgres may return rows in any order.
+        Pageable pageable = PageRequest.of(0, 1, Sort.by("id"));
 
         Page<ShowAdminProductDto> page = adminProductService.getAllProducts(pageable);
 

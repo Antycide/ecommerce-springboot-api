@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
 import org.example.ecommerce.Exception.ProductNotFoundException;
+import org.example.ecommerce.Exception.UserNotFoundException;
 import org.example.ecommerce.Mappers.WishlistMapper;
 import org.example.ecommerce.Model.Product;
 import org.example.ecommerce.Model.User;
+import org.example.ecommerce.Model.UserRole;
 
 import org.example.ecommerce.Model.Wishlist;
 import org.example.ecommerce.Model.WishlistItem;
@@ -14,7 +16,7 @@ import org.example.ecommerce.Repository.ProductRepository;
 import org.example.ecommerce.Repository.UserRepository;
 import org.example.ecommerce.Repository.WishlistItemRepository;
 import org.example.ecommerce.Repository.WishlistRepository;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,25 +95,28 @@ public class WishListService {
 
     @Transactional(readOnly = true)
     public WishlistResponseDto showWishlistOfCurrentUser() {
-        User user = currentShopper.get();
-
-        if (user.getWishlist() == null) {
-            // if there are no products in the wishlist, we will return an empty list
-            return new WishlistResponseDto(Collections.emptyList());
-        }
-
-        return wishlistMapper.wishlistToWishlistResponseDto(user.getWishlist());
+        return toResponse(currentShopper.get());
     }
-    //TODO change this method
-    @Transactional(readOnly = true)
-    public WishlistResponseDto showWishlistOfAnotherUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User with username " + id + " not found"));
 
+    /** Owners may read their own wishlist; only admins may read anyone else's. */
+    @Transactional(readOnly = true)
+    public WishlistResponseDto showWishlistOfUser(Long userId) {
+        User caller = currentShopper.get();
+        if (caller.getId().equals(userId)) {
+            return toResponse(caller);
+        }
+        // Checked before the lookup so non-admins can't probe which user ids exist.
+        if (caller.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("You are not allowed to view this wishlist");
+        }
+        return toResponse(userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " does not exist")));
+    }
+
+    private WishlistResponseDto toResponse(User user) {
         if (user.getWishlist() == null) {
             return new WishlistResponseDto(Collections.emptyList());
         }
-
         return wishlistMapper.wishlistToWishlistResponseDto(user.getWishlist());
     }
 
