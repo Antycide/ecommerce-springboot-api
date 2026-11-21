@@ -14,7 +14,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Testcontainers
 @SpringBootTest
@@ -64,13 +63,15 @@ class ProductDeletionIntegrationTest {
         item.setQuantity(1);
         order.addOrderItem(item);
         order = orderRepository.save(order);
-        assumeTrue(order.getId().equals(unrelated.getId()), "ids must collide for this check");
+        // Precondition, not an assumption: if ids stop colliding this test must fail, not silently skip.
+        assertThat(order.getId()).as("order id must equal the deleted product's id").isEqualTo(unrelated.getId());
+        Long orderId = order.getId();
 
         adminProductService.deleteProduct(unrelated.getId());
 
         assertThat(orderItemRepository.findAll())
                 .singleElement()
-                .satisfies(i -> assertThat(i.getOrder()).isNotNull());
+                .satisfies(i -> assertThat(i.getOrder().getId()).isEqualTo(orderId));
     }
 
     private static Product product(String name, Category category) {
