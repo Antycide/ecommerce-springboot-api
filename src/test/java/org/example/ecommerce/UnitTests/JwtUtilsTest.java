@@ -69,13 +69,13 @@ public class JwtUtilsTest {
     }
 
     @Test
-    void testExpiredJwtToken() throws InterruptedException {
+    void testExpiredJwtToken() {
         // given
         String secretKey = Base64.getEncoder().encodeToString("mysecretkey1234567890mysecretkey1234567890".getBytes());
         TestUtils.setField(jwtUtils, "jwtSecret", secretKey);
 
-        // set expiration to 1 second
-        TestUtils.setField(jwtUtils, "jwtExpiration", 1000);
+        // negative expiration: the token is already expired when issued, so no sleep is needed
+        TestUtils.setField(jwtUtils, "jwtExpiration", -2000);
 
         // mock authentication
         when(authentication.getPrincipal()).thenReturn(user);
@@ -83,9 +83,6 @@ public class JwtUtilsTest {
         // when
         String token = jwtUtils.generateJwtToken(authentication);
         assertNotNull(token);
-
-        // wait until token expires
-        Thread.sleep(1500);
 
         // then
         boolean valid = jwtUtils.validateJwtToken(token);

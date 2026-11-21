@@ -117,5 +117,5 @@ Reviews:
 Wishlist:
 - `POST /api/wishlist/{productId}`
 - `GET /api/wishlist`
-- `GET /api/wishlist/{userId}`
+- `GET /api/wishlist/{userId}` (own wishlist, or any user's for ADMIN)
 - `DELETE /api/wishlist/{productId}`

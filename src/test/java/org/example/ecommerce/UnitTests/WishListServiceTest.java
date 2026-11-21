@@ -3,9 +3,11 @@ package org.example.ecommerce.UnitTests;
 import org.example.ecommerce.DTO.ShowWishlistDto;
 import org.example.ecommerce.DTO.WishlistResponseDto;
 import org.example.ecommerce.Exception.ProductNotFoundException;
+import org.example.ecommerce.Exception.UserNotFoundException;
 import org.example.ecommerce.Mappers.WishlistMapper;
 import org.example.ecommerce.Model.Product;
 import org.example.ecommerce.Model.User;
+import org.example.ecommerce.Model.UserRole;
 import org.example.ecommerce.Model.Wishlist;
 import org.example.ecommerce.Model.WishlistItem;
 import org.example.ecommerce.Repository.ProductRepository;
@@ -20,7 +22,7 @@ import org.example.ecommerce.Service.CurrentShopper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -164,20 +166,37 @@ public class WishListServiceTest {
     }
 
     @Test
-    void showWishlistOfAnotherUser_whenMissing_throwsException() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+    void showWishlistOfUser_whenOwnId_returnsOwnWishlist() {
+        WishlistResponseDto response = wishListService.showWishlistOfUser(1L);
 
-        assertThrows(UsernameNotFoundException.class, () -> wishListService.showWishlistOfAnotherUser(1L));
+        assertThat(response.wishlist()).isEmpty();
+        verifyNoInteractions(userRepository);
     }
 
     @Test
-    void showWishlistOfAnotherUser_whenWishlistNull_returnsEmptyList() {
+    void showWishlistOfUser_whenCustomerReadsAnotherUser_throwsAccessDenied() {
+        user.setRole(UserRole.CUSTOMER);
+
+        assertThrows(AccessDeniedException.class, () -> wishListService.showWishlistOfUser(2L));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void showWishlistOfUser_whenAdminAndUserMissing_throwsUserNotFound() {
+        user.setRole(UserRole.ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> wishListService.showWishlistOfUser(2L));
+    }
+
+    @Test
+    void showWishlistOfUser_whenAdminAndWishlistNull_returnsEmptyList() {
+        user.setRole(UserRole.ADMIN);
         User other = new User();
-        other.setWishlist(null);
+        other.setId(2L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(other));
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(other));
-
-        WishlistResponseDto response = wishListService.showWishlistOfAnotherUser(1L);
+        WishlistResponseDto response = wishListService.showWishlistOfUser(2L);
 
         assertThat(response.wishlist()).isEmpty();
     }
