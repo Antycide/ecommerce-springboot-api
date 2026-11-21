@@ -16,7 +16,6 @@ public interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "wishlistItems", ignore = true)
     @Mapping(target = "category", ignore = true)
-    @Mapping(target = "orderItems", ignore = true)
     @Mapping(target = "reviews", ignore = true)
     Product addProductDtoToProduct(AddProductDto addProductDto);
 
@@ -30,7 +29,6 @@ public interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "wishlistItems", ignore = true)
-    @Mapping(target = "orderItems", ignore = true)
     @Mapping(target = "reviews", ignore = true)
     void updateProductFromDto(AddProductDto addProductDto, @MappingTarget Product product);
 }

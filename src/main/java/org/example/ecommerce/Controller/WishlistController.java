@@ -42,8 +42,8 @@ public class WishlistController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<WishlistResponseDto> showWishlistOfAnotherUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(wishListService.showWishlistOfAnotherUser(userId));
+    public ResponseEntity<WishlistResponseDto> showWishlistOfUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(wishListService.showWishlistOfUser(userId));
     }
 
 }

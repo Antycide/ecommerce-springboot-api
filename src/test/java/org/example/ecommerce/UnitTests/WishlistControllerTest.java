@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -64,13 +65,21 @@ public class WishlistControllerTest {
     }
 
     @Test
-    void showWishlistOfAnotherUser_returnsWishlist() throws Exception {
+    void showWishlistOfUser_returnsWishlist() throws Exception {
         WishlistResponseDto dto = new WishlistResponseDto(List.of());
-        when(wishListService.showWishlistOfAnotherUser(1L)).thenReturn(dto);
+        when(wishListService.showWishlistOfUser(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/api/wishlist/1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.wishlist").isArray());
+    }
+
+    @Test
+    void showWishlistOfUser_whenAccessDenied_returnsForbidden() throws Exception {
+        when(wishListService.showWishlistOfUser(2L)).thenThrow(new AccessDeniedException("denied"));
+
+        mockMvc.perform(get("/api/wishlist/2"))
+                .andExpect(status().isForbidden());
     }
 }

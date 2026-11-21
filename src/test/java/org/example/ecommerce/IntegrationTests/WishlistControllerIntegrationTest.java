@@ -89,20 +89,80 @@ public class WishlistControllerIntegrationTest {
     }
 
     @Test
-    void showWishlistOfAnotherUser_returnsEmptyList() {
+    void showWishlistOfUser_whenCustomerReadsAnotherUser_returnsForbidden() {
         User other = registerUserEntity("other", "other@example.com");
         String jwt = loginAndGetJwt("test123", "test123");
 
-        ResponseEntity<WishlistResponseDto> response = testRestTemplate.exchange(
+        ResponseEntity<String> response = testRestTemplate.exchange(
                 "/api/wishlist/" + other.getId(),
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(jwt)),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void showWishlistOfUser_whenAdmin_returnsTargetUsersWishlist() {
+        // The target has an item and the admin has none, so returning the admin's own wishlist would fail.
+        Product product = createProduct("Book");
+        String otherJwt = loginAndGetJwt("other", "other123");
+        testRestTemplate.exchange("/api/wishlist/" + product.getId(), HttpMethod.POST,
+                new HttpEntity<>(bearerHeaders(otherJwt)), ShowWishlistDto.class);
+        Long otherId = userRepository.findByUsername("other").orElseThrow().getId();
+        String adminJwt = loginAsAdmin();
+
+        ResponseEntity<WishlistResponseDto> response = testRestTemplate.exchange(
+                "/api/wishlist/" + otherId,
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(adminJwt)),
+                WishlistResponseDto.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().wishlist())
+                .extracting(ShowWishlistDto::productName)
+                .containsExactly("Book");
+    }
+
+    @Test
+    void showWishlistOfUser_whenAdminAndUserMissing_returnsNotFound() {
+        String adminJwt = loginAsAdmin();
+
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/wishlist/" + Long.MAX_VALUE,
+                HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(adminJwt)),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void showWishlistOfUser_whenOwnId_returnsOwnWishlist() {
+        String jwt = loginAndGetJwt("test123", "test123");
+        Long ownId = userRepository.findByUsername("test123").orElseThrow().getId();
+
+        ResponseEntity<WishlistResponseDto> response = testRestTemplate.exchange(
+                "/api/wishlist/" + ownId,
                 HttpMethod.GET,
                 new HttpEntity<>(bearerHeaders(jwt)),
                 WishlistResponseDto.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().wishlist()).isEmpty();
+    }
+
+    private String loginAsAdmin() {
+        String jwt = loginAndGetJwt("admin", "admin123");
+        // Roles are reloaded from the DB on every request, so promoting after login is enough.
+        User admin = userRepository.findByUsername("admin").orElseThrow();
+        admin.setRole(UserRole.ADMIN);
+        userRepository.save(admin);
+        return jwt;
     }
 
     private String loginAndGetJwt(String username, String password) {
